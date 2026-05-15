@@ -4,7 +4,10 @@ import { useEffect, startTransition, useState } from "react"
 import { useForm, useFormState } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 
-import { AppDialog } from "@/components/shared/app-dialog"
+import {
+  AppDialog,
+  dialogFormFieldsClass,
+} from "@/components/shared/app-dialog"
 import { ConfirmDialog } from "@/components/shared/confirm-dialog"
 import { Input } from "@/components/Input"
 import { Button } from "@/components/ui/button"
@@ -117,7 +120,11 @@ function UserCreateForm({
   })
 
   return (
-    <form id="user-create-form" className="space-y-4" onSubmit={onSubmit}>
+    <form
+      id="user-create-form"
+      className={dialogFormFieldsClass}
+      onSubmit={onSubmit}
+    >
       <Input
         label="Name"
         required
@@ -139,7 +146,7 @@ function UserCreateForm({
         error={form.formState.errors.password?.message}
         {...form.register("password")}
       />
-      <div className="space-y-1.5">
+      <div className="flex flex-col gap-1.5">
         <span className="text-sm font-medium">Role</span>
         <p className="text-muted-foreground text-xs">
           Only administrators can assign roles when creating a user.
@@ -226,7 +233,11 @@ function UserEditForm({
   })
 
   return (
-    <form id="user-edit-form" className="space-y-4" onSubmit={onSubmit}>
+    <form
+      id="user-edit-form"
+      className={dialogFormFieldsClass}
+      onSubmit={onSubmit}
+    >
       <Input
         label="Name"
         required
@@ -240,7 +251,7 @@ function UserEditForm({
         error={form.formState.errors.email?.message}
         {...form.register("email")}
       />
-      <div className="space-y-1.5">
+      <div className="flex flex-col gap-1.5">
         <span className="text-sm font-medium">Role</span>
         <Select
           value={form.watch("role")}

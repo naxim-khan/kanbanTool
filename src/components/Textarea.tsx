@@ -62,19 +62,20 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             </label>
           ) : null}
 
-          <ShadcnTextarea
-            ref={ref}
-            id={fieldId}
-            disabled={disabled}
-            required={required}
-            aria-invalid={error ? true : undefined}
-            aria-describedby={describedBy || undefined}
-            className={className}
-            {...props}
-          />
+          <div className="relative">
+            <ShadcnTextarea
+              ref={ref}
+              id={fieldId}
+              disabled={disabled}
+              required={required}
+              aria-invalid={error ? true : undefined}
+              aria-describedby={describedBy || undefined}
+              className={className}
+              {...props}
+            />
+            <ValidationHint id={errorId} message={error} />
+          </div>
         </div>
-
-        <ValidationHint id={errorId} message={error} />
 
         {helperText && !error ? (
           <p

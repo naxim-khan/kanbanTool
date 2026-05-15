@@ -9,7 +9,10 @@ import { Button } from "@/components/Button"
 import { ErrorState } from "@/components/ErrorState"
 import { Input } from "@/components/Input"
 import { PageLoader } from "@/components/PageLoader"
-import { AppDialog } from "@/components/shared/app-dialog"
+import {
+  AppDialog,
+  dialogFormFieldsClass,
+} from "@/components/shared/app-dialog"
 import { Button as UiButton } from "@/components/ui/button"
 import {
   Select,
@@ -108,7 +111,11 @@ function ProfileSelfEditForm({
   })
 
   return (
-    <form id="profile-edit-form" className="space-y-4" onSubmit={onSubmit}>
+    <form
+      id="profile-edit-form"
+      className={dialogFormFieldsClass}
+      onSubmit={onSubmit}
+    >
       <Input
         label="Name"
         required
@@ -189,7 +196,11 @@ function ProfileAdminEditForm({
   })
 
   return (
-    <form id="profile-edit-form" className="space-y-4" onSubmit={onSubmit}>
+    <form
+      id="profile-edit-form"
+      className={dialogFormFieldsClass}
+      onSubmit={onSubmit}
+    >
       <Input
         label="Name"
         required
@@ -203,7 +214,7 @@ function ProfileAdminEditForm({
         error={form.formState.errors.email?.message}
         {...form.register("email")}
       />
-      <div className="space-y-1.5">
+      <div className="flex flex-col gap-1.5">
         <span className="text-sm font-medium">Role</span>
         <Select
           value={form.watch("role")}

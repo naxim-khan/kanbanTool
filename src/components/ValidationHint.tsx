@@ -10,40 +10,41 @@ export type ValidationHintProps = {
 }
 
 /**
- * Reserved height so validation messages don’t shift layout when they appear.
+ * Original hint styling, floated over the gap below the control (like a native
+ * `title` tooltip) so showing/hiding never resizes the field or dialog.
+ * Parent control wrapper must be `relative`.
  */
-const HINT_SLOT =
-  "box-border flex min-h-7 h-7 w-full shrink-0 flex-col justify-center overflow-hidden"
-
 export function ValidationHint({
   id,
   message,
   className,
 }: ValidationHintProps) {
   const text = message?.trim()
+  if (!text) return null
 
   return (
     <div
-      className={cn(HINT_SLOT, className)}
+      role="alert"
       aria-live="polite"
       aria-atomic="true"
+      className={cn(
+        "pointer-events-none absolute top-full left-0 z-30 mt-0.5 w-full",
+        className
+      )}
     >
-      {text ? (
-        <p
-          id={id}
-          role="alert"
-          className="border-destructive/20 bg-destructive/[0.07] text-destructive flex max-h-full w-full items-center gap-1.5 overflow-hidden rounded-md border px-2 py-0.5 text-xs font-medium leading-snug ring-1 ring-destructive/10 ring-inset sm:text-[0.8125rem] dark:border-destructive/30 dark:bg-destructive/10 dark:ring-destructive/15"
-        >
-          <AlertCircle
-            className="text-destructive/90 size-3.5 shrink-0 sm:size-4"
-            strokeWidth={2}
-            aria-hidden
-          />
-          <span className="line-clamp-1 min-w-0 flex-1" title={text}>
-            {text}
-          </span>
-        </p>
-      ) : null}
+      <p
+        id={id}
+        className="text-destructive flex w-full items-center gap-1.5 overflow-hidden rounded-md border border-destructive/30 bg-white/20 px-2 py-0.5 text-xs font-medium leading-snug shadow-lg ring-1 ring-white/50 backdrop-blur-xl backdrop-saturate-150 sm:text-[0.8125rem] dark:border-destructive/40 dark:bg-black/25 dark:ring-white/10"
+      >
+        <AlertCircle
+          className="text-destructive/90 size-3.5 shrink-0 sm:size-4"
+          strokeWidth={2}
+          aria-hidden
+        />
+        <span className="line-clamp-1 min-w-0 flex-1" title={text}>
+          {text}
+        </span>
+      </p>
     </div>
   )
 }

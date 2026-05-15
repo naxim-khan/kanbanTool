@@ -94,10 +94,10 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 {rightIcon}
               </span>
             ) : null}
+
+            <ValidationHint id={errorId} message={error} />
           </div>
         </div>
-
-        <ValidationHint id={errorId} message={error} />
 
         {helperText && !error ? (
           <p

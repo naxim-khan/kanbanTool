@@ -38,11 +38,11 @@ export function ConfirmDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="gap-0 p-0 sm:max-w-sm" showCloseButton={false}>
-        <DialogHeader className="border-border space-y-2 border-b p-4 text-left">
+        <DialogHeader className="border-border space-y-1 border-b px-4 py-3 text-left">
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <div className="flex flex-row justify-end gap-2 border-t bg-muted/50 p-4">
+        <div className="flex flex-row justify-end gap-2 border-t bg-muted/50 px-4 py-3">
           <Button
             type="button"
             variant="outline"

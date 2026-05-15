@@ -4,7 +4,10 @@ import { useEffect, startTransition, useState } from "react"
 import { useForm, useFormState } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 
-import { AppDialog } from "@/components/shared/app-dialog"
+import {
+  AppDialog,
+  dialogFormFieldsClass,
+} from "@/components/shared/app-dialog"
 import { ConfirmDialog } from "@/components/shared/confirm-dialog"
 import { UserSelect } from "@/components/shared/inputs/UserSelect"
 import { Input } from "@/components/Input"
@@ -153,7 +156,11 @@ function TaskCreateForm({
   })
 
   return (
-    <form id="task-create-form" className="space-y-4" onSubmit={onSubmit}>
+    <form
+      id="task-create-form"
+      className={dialogFormFieldsClass}
+      onSubmit={onSubmit}
+    >
       <Input
         label="Title"
         required
@@ -167,7 +174,7 @@ function TaskCreateForm({
         {...form.register("description")}
       />
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5">
+        <div className="flex flex-col gap-1.5">
           <span className="text-sm font-medium">Status</span>
           <Select
             value={form.watch("status")}
@@ -189,7 +196,7 @@ function TaskCreateForm({
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1.5">
+        <div className="flex flex-col gap-1.5">
           <span className="text-sm font-medium">Priority</span>
           <Select
             value={form.watch("priority")}
@@ -333,7 +340,11 @@ function TaskEditForm({
   })
 
   return (
-    <form id="task-edit-form" className="space-y-4" onSubmit={onSubmit}>
+    <form
+      id="task-edit-form"
+      className={dialogFormFieldsClass}
+      onSubmit={onSubmit}
+    >
       <Input
         label="Title"
         required
@@ -346,8 +357,8 @@ function TaskEditForm({
         error={form.formState.errors.description?.message}
         {...form.register("description")}
       />
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="flex flex-col gap-1.5">
           <span className="text-sm font-medium">Status</span>
           <Select
             value={form.watch("status")}
@@ -369,7 +380,7 @@ function TaskEditForm({
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1.5">
+        <div className="flex flex-col gap-1.5">
           <span className="text-sm font-medium">Priority</span>
           <Select
             value={form.watch("priority")}

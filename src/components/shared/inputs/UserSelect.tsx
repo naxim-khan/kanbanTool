@@ -10,6 +10,7 @@ import {
   UserX,
 } from "lucide-react"
 
+import { ValidationHint } from "@/components/ValidationHint"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -115,17 +116,19 @@ export function UserSelect({
           : null
 
   return (
-    <div className="w-full min-w-0 space-y-1.5">
-      <span
-        className={cn(
-          isToolbar
-            ? "text-muted-foreground text-xs font-medium"
-            : "text-sm font-medium"
-        )}
-      >
-        {label}
-      </span>
-      <Popover
+    <div className="w-full min-w-0">
+      <div className="flex flex-col gap-1.5">
+        <span
+          className={cn(
+            isToolbar
+              ? "text-muted-foreground text-xs font-medium"
+              : "text-[0.9375rem] font-medium leading-snug"
+          )}
+        >
+          {label}
+        </span>
+        <div className="relative">
+          <Popover
         open={open}
         onOpenChange={(next) => {
           setOpen(next)
@@ -300,12 +303,10 @@ export function UserSelect({
             )}
           </div>
         </PopoverContent>
-      </Popover>
-      {error ? (
-        <p className="text-sm text-destructive" role="alert">
-          {error}
-        </p>
-      ) : null}
+          </Popover>
+          <ValidationHint message={error} />
+        </div>
+      </div>
     </div>
   )
 }
