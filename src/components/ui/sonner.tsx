@@ -9,15 +9,14 @@ import { cn } from "@/lib/utils"
 const iconClass =
   "size-[1.125rem] shrink-0 opacity-[0.92] drop-shadow-[0_1px_2px_oklch(0_0_0/0.12)] dark:drop-shadow-[0_1px_3px_oklch(0_0_0/0.45)]"
 
-const defaultToastClassNames: NonNullable<ToasterProps["toastOptions"]>["classNames"] =
-  {
-    toast: "cn-toast",
-    content: "sonner-toast-content",
-    title: "sonner-toast-title",
-    description: "sonner-toast-description",
-    icon: "sonner-toast-icon",
-    closeButton: "sonner-toast-close",
-  }
+const defaultToastClassNames = {
+  toast: "cn-toast",
+  content: "sonner-toast-content",
+  title: "sonner-toast-title",
+  description: "sonner-toast-description",
+  icon: "sonner-toast-icon",
+  closeButton: "sonner-toast-close",
+} as const
 
 const glassStyle = {
   "--width": "min(calc(100vw - 2rem), 400px)",
