@@ -274,7 +274,7 @@ export function ProfileClient() {
       </div>
 
       {isPending ? (
-        <PageLoader label="Loading profile…" />
+        <PageLoader message="Loading profile…" />
       ) : isError ? (
         <ErrorState
           message={error instanceof Error ? error.message : "Request failed"}
