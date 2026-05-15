@@ -20,6 +20,7 @@ type AppShellLayoutProps = {
  */
 export function AppShellLayout({ children }: AppShellLayoutProps) {
   const user = useAppSelector((s) => s.auth.user)
+  const isAdmin = user?.role === "ADMIN"
   const logout = useLogout()
 
   return (
@@ -27,6 +28,7 @@ export function AppShellLayout({ children }: AppShellLayoutProps) {
       <SidebarProvider defaultOpen>
         <AppSidebar
           user={user}
+          isAdmin={isAdmin}
           onLogout={() => {
             void logout.mutate()
           }}

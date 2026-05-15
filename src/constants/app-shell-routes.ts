@@ -3,6 +3,7 @@ export const APP_SHELL_ROUTE_PREFIXES = [
   "/dashboard",
   "/tasks",
   "/users",
+  "/profile",
   "/billing",
   "/notifications",
   "/settings",

@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useMemo, useState, startTransition } from "react"
-import { isAxiosError } from "axios"
 
 import { UserSelect } from "@/components/shared/inputs/UserSelect"
 import { Button } from "@/components/ui/button"
@@ -19,7 +18,7 @@ import {
   TASK_STATUS_VALUES,
 } from "@/constants/tasks"
 import { useDebouncedValue } from "@/hooks/shared/useDebouncedValue"
-import { useUsers } from "@/hooks/users/useUsers"
+import { useAssignableUsersList } from "@/hooks/users/useAssignableUsersList"
 import { filterUsersBySearch } from "@/lib/helpers/filter-users-by-search"
 import type {
   TaskPriorityFilter,
@@ -41,7 +40,7 @@ export type TasksFilterToolbarProps = {
 }
 
 /**
- * Tasks filter bar: Redux-driven selects + TanStack `useUsers` comboboxes
+ * Tasks filter bar: Redux-driven selects + assignable-user comboboxes
  * (no UUID typing). Lives under `views/tasks` (not `src/pages` — reserved by Next.js).
  */
 export function TasksFilterToolbar({
@@ -55,7 +54,8 @@ export function TasksFilterToolbar({
   onCreatorChange,
   onReset,
 }: TasksFilterToolbarProps) {
-  const { data, isPending, isFetching, isError, error, refetch } = useUsers(true)
+  const { data, isPending, isFetching, isError, error, refetch } =
+    useAssignableUsersList(true)
 
   const [assigneeSearch, setAssigneeSearch] = useState("")
   const [creatorSearch, setCreatorSearch] = useState("")
@@ -100,11 +100,9 @@ export function TasksFilterToolbar({
   }, [creatorId])
 
   const listErrorMessage = isError
-    ? isAxiosError(error) && error.response?.status === 403
-      ? "You do not have permission to load the user list for filters."
-      : error instanceof Error
-        ? error.message
-        : "Could not load users."
+    ? error instanceof Error
+      ? error.message
+      : "Could not load users."
     : null
 
   return (

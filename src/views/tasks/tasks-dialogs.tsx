@@ -3,8 +3,6 @@
 import { useEffect, startTransition, useState } from "react"
 import { useForm, useFormState } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { isAxiosError } from "axios"
-
 import { AppDialog } from "@/components/shared/app-dialog"
 import { ConfirmDialog } from "@/components/shared/confirm-dialog"
 import { UserSelect } from "@/components/shared/inputs/UserSelect"
@@ -238,11 +236,9 @@ function TaskCreateFormFields({
         allowClear
         fetchError={
           assigneeListError
-            ? isAxiosError(assigneeListErr) && assigneeListErr.response?.status === 403
-              ? "You do not have permission to list users. Ask an admin to assign tasks."
-              : (assigneeListErr instanceof Error
-                  ? assigneeListErr.message
-                  : "Could not load users.")
+            ? assigneeListErr instanceof Error
+              ? assigneeListErr.message
+              : "Could not load users."
             : null
         }
         onRetry={() => void refetchAssignees()}
@@ -411,11 +407,9 @@ function TaskEditFormFields({
         emptyMessage="No users found — clear search or try another name or email."
         fetchError={
           assigneeListError
-            ? isAxiosError(assigneeListErr) && assigneeListErr.response?.status === 403
-              ? "You do not have permission to list users. Ask an admin to assign tasks."
-              : (assigneeListErr instanceof Error
-                  ? assigneeListErr.message
-                  : "Could not load users.")
+            ? assigneeListErr instanceof Error
+              ? assigneeListErr.message
+              : "Could not load users."
             : null
         }
         onRetry={() => void refetchAssignees()}

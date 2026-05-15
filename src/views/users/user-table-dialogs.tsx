@@ -15,18 +15,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useCreateUser } from "@/hooks/users/useCreateUser"
 import { useDeleteUser } from "@/hooks/users/useDeleteUser"
 import { useUpdateUser } from "@/hooks/users/useUpdateUser"
 import { useUser } from "@/hooks/users/useUser"
 import {
+  adminUserCreateFormSchema,
   adminUserEditFormSchema,
+  type AdminUserCreateFormValues,
   type AdminUserEditFormValues,
 } from "@/schemas/user-form.schema"
+import { runOptimisticMutation } from "@/lib/helpers/run-optimistic-mutation"
 import type { AdminUserRow } from "@/schemas/user-api.schema"
 
 type UserTableDialogsProps = {
   viewUser: AdminUserRow | null
   onViewDismiss: () => void
+  createOpen: boolean
+  onCreateDismiss: () => void
   editUser: AdminUserRow | null
   onEditDismiss: () => void
   deleteUser: AdminUserRow | null
@@ -71,6 +77,94 @@ function UserViewBody({ user }: { user: AdminUserRow }) {
   )
 }
 
+function UserCreateForm({
+  onDone,
+  onFooterStateChange,
+}: {
+  onDone: () => void
+  onFooterStateChange?: (state: { valid: boolean }) => void
+}) {
+  const create = useCreateUser()
+  const form = useForm<AdminUserCreateFormValues>({
+    resolver: zodResolver(adminUserCreateFormSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      role: "USER",
+    },
+    mode: "onChange",
+    reValidateMode: "onChange",
+  })
+
+  const { isValid } = useFormState({ control: form.control })
+
+  useEffect(() => {
+    onFooterStateChange?.({ valid: isValid })
+  }, [isValid, onFooterStateChange])
+
+  const onSubmit = form.handleSubmit((values) => {
+    runOptimisticMutation(
+      create.mutate,
+      {
+        name: values.name,
+        email: values.email,
+        password: values.password,
+        role: values.role,
+      },
+      onDone
+    )
+  })
+
+  return (
+    <form id="user-create-form" className="space-y-4" onSubmit={onSubmit}>
+      <Input
+        label="Name"
+        required
+        error={form.formState.errors.name?.message}
+        {...form.register("name")}
+      />
+      <Input
+        label="Email"
+        type="email"
+        required
+        error={form.formState.errors.email?.message}
+        {...form.register("email")}
+      />
+      <Input
+        label="Password"
+        type="password"
+        required
+        autoComplete="new-password"
+        error={form.formState.errors.password?.message}
+        {...form.register("password")}
+      />
+      <div className="space-y-1.5">
+        <span className="text-sm font-medium">Role</span>
+        <p className="text-muted-foreground text-xs">
+          Only administrators can assign roles when creating a user.
+        </p>
+        <Select
+          value={form.watch("role")}
+          onValueChange={(v) =>
+            form.setValue("role", v as AdminUserRow["role"], {
+              shouldValidate: true,
+            })
+          }
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="USER">USER</SelectItem>
+            <SelectItem value="ADMIN">ADMIN</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    </form>
+  )
+}
+
 function UserEditForm({
   user,
   onDone,
@@ -78,7 +172,7 @@ function UserEditForm({
 }: {
   user: AdminUserRow
   onDone: () => void
-  onFooterStateChange?: (state: { valid: boolean; pending: boolean }) => void
+  onFooterStateChange?: (state: { valid: boolean }) => void
 }) {
   const update = useUpdateUser()
   const form = useForm<AdminUserEditFormValues>({
@@ -105,11 +199,9 @@ function UserEditForm({
     void form.trigger()
   }, [user, form])
 
-  const busy = update.isPending
-
   useEffect(() => {
-    onFooterStateChange?.({ valid: isValid, pending: busy })
-  }, [isValid, busy, onFooterStateChange])
+    onFooterStateChange?.({ valid: isValid })
+  }, [isValid, onFooterStateChange])
 
   const onSubmit = form.handleSubmit((raw) => {
     const values = adminUserEditFormSchema.parse(raw)
@@ -126,7 +218,11 @@ function UserEditForm({
     const pw = values.password?.trim()
     if (pw) payload.password = pw
 
-    update.mutate({ id: user.id, payload }, { onSuccess: onDone })
+    runOptimisticMutation(
+      update.mutate,
+      { id: user.id, payload },
+      onDone
+    )
   })
 
   return (
@@ -134,7 +230,6 @@ function UserEditForm({
       <Input
         label="Name"
         required
-        disabled={busy}
         error={form.formState.errors.name?.message}
         {...form.register("name")}
       />
@@ -142,7 +237,6 @@ function UserEditForm({
         label="Email"
         type="email"
         required
-        disabled={busy}
         error={form.formState.errors.email?.message}
         {...form.register("email")}
       />
@@ -155,7 +249,6 @@ function UserEditForm({
               shouldValidate: true,
             })
           }
-          disabled={busy}
         >
           <SelectTrigger className="w-full">
             <SelectValue />
@@ -170,7 +263,6 @@ function UserEditForm({
         label="New password (optional)"
         type="password"
         autoComplete="new-password"
-        disabled={busy}
         placeholder="Leave blank to keep current password"
         error={form.formState.errors.password?.message}
         {...form.register("password")}
@@ -182,27 +274,64 @@ function UserEditForm({
 export function UserTableDialogs({
   viewUser,
   onViewDismiss,
+  createOpen,
+  onCreateDismiss,
   editUser,
   onEditDismiss,
   deleteUser,
   onDeleteDismiss,
 }: UserTableDialogsProps) {
   const del = useDeleteUser()
-  const [userEditFooter, setUserEditFooter] = useState({
-    valid: false,
-    pending: false,
-  })
+  const [userCreateFooter, setUserCreateFooter] = useState({ valid: false })
+  const [userEditFooter, setUserEditFooter] = useState({ valid: false })
+
+  useEffect(() => {
+    if (!createOpen) {
+      startTransition(() => {
+        setUserCreateFooter({ valid: false })
+      })
+    }
+  }, [createOpen])
 
   useEffect(() => {
     if (!editUser) {
       startTransition(() => {
-        setUserEditFooter({ valid: false, pending: false })
+        setUserEditFooter({ valid: false })
       })
     }
   }, [editUser])
 
   return (
     <>
+      <AppDialog
+        open={createOpen}
+        onOpenChange={(o) => !o && onCreateDismiss()}
+        title="Add user"
+        description="Create a user via POST /users (admin). Role can only be set here by administrators."
+        contentClassName="sm:max-w-md"
+        footer={
+          <>
+            <Button type="button" variant="outline" onClick={onCreateDismiss}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="user-create-form"
+              disabled={!userCreateFooter.valid}
+            >
+              Create user
+            </Button>
+          </>
+        }
+      >
+        {createOpen ? (
+          <UserCreateForm
+            onDone={onCreateDismiss}
+            onFooterStateChange={setUserCreateFooter}
+          />
+        ) : null}
+      </AppDialog>
+
       <AppDialog
         open={Boolean(viewUser)}
         onOpenChange={(o) => !o && onViewDismiss()}
@@ -226,9 +355,9 @@ export function UserTableDialogs({
             <Button
               type="submit"
               form="user-edit-form"
-              disabled={!userEditFooter.valid || userEditFooter.pending}
+              disabled={!userEditFooter.valid}
             >
-              {userEditFooter.pending ? "Saving…" : "Save changes"}
+              Save changes
             </Button>
           </>
         }
@@ -253,10 +382,9 @@ export function UserTableDialogs({
         }
         confirmLabel="Delete"
         confirmVariant="destructive"
-        isConfirming={del.isPending}
         onConfirm={() => {
           if (!deleteUser) return
-          del.mutate(deleteUser.id, { onSuccess: onDeleteDismiss })
+          runOptimisticMutation(del.mutate, deleteUser.id, onDeleteDismiss)
         }}
       />
     </>

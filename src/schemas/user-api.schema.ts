@@ -14,3 +14,14 @@ export const adminUserRowSchema = z.object({
 export const adminUsersListSchema = z.array(adminUserRowSchema)
 
 export type AdminUserRow = z.infer<typeof adminUserRowSchema>
+
+/** GET /assignable-users — task assignee/creator pickers. */
+export const assignableUserRowSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  email: z.string(),
+})
+
+export const assignableUsersListSchema = z.array(assignableUserRowSchema)
+
+export type AssignableUserRow = z.infer<typeof assignableUserRowSchema>

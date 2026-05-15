@@ -23,6 +23,7 @@ import { useTaskStatusDndMutation } from "@/hooks/tasks/useTaskStatusDndMutation
 import { useUpdateTask } from "@/hooks/tasks/useUpdateTask"
 import { useUpdateTaskStatus } from "@/hooks/tasks/useUpdateTaskStatus"
 import { datetimeLocalValueToIso } from "@/lib/helpers/datetime-local"
+import { getTaskPermissions } from "@/lib/helpers/task-permissions"
 import { mergeTasksListQuery } from "@/lib/helpers/merge-tasks-list-query"
 import {
   taskEditFormSchema,
@@ -50,6 +51,8 @@ type TasksView = "kanban" | "table"
 export function TasksClient() {
   const dispatch = useAppDispatch()
   const filters = useAppSelector((s) => s.taskFilters)
+  const sessionUserId = useAppSelector((s) => s.auth.user?.id)
+  const sessionRole = useAppSelector((s) => s.auth.user?.role)
 
   const [view, setView] = useState<TasksView>("kanban")
   const [pagination, setPagination] = useState<PaginationState>({
@@ -86,15 +89,29 @@ export function TasksClient() {
   const viewDetail = useTask(viewTask?.id ?? null, Boolean(viewTask))
   const resolvedViewTask = (viewDetail.data ?? viewTask) as TaskWithRelations | null
 
-  const moveStatus = useTaskStatusDndMutation(kanbanQuery)
+  const moveStatus = useTaskStatusDndMutation()
   const createMut = useCreateTask()
   const updateMut = useUpdateTask()
   const updateStatusMut = useUpdateTaskStatus()
   const deleteMut = useDeleteTask()
 
   const onViewTask = useCallback((t: TaskWithRelations) => setViewTask(t), [])
-  const onEditTask = useCallback((t: TaskWithRelations) => setEditTask(t), [])
-  const onDeleteTask = useCallback((t: TaskWithRelations) => setDeleteTask(t), [])
+  const onEditTask = useCallback((t: TaskWithRelations) => {
+    if (
+      !getTaskPermissions(t, sessionUserId, sessionRole).canEdit
+    ) {
+      return
+    }
+    setEditTask(t)
+  }, [sessionUserId, sessionRole])
+  const onDeleteTask = useCallback((t: TaskWithRelations) => {
+    if (
+      !getTaskPermissions(t, sessionUserId, sessionRole).canDelete
+    ) {
+      return
+    }
+    setDeleteTask(t)
+  }, [sessionUserId, sessionRole])
 
   const taskRowActions = useMemo(
     () => ({
@@ -277,10 +294,13 @@ export function TasksClient() {
             <TasksKanbanClient
               grouped={groupedByStatus}
               isLoading={isPending && !data}
+              sessionUserId={sessionUserId}
+              sessionRole={sessionRole}
               onView={onViewTask}
               onEdit={onEditTask}
               onDelete={onDeleteTask}
               moveFailureCount={moveStatus.failureCount}
+              pendingMoveTaskIds={moveStatus.pendingTaskIds}
               onMoveStatus={(args) => moveStatus.mutate(args)}
             />
           ) : (
@@ -301,6 +321,8 @@ export function TasksClient() {
                 })
               }}
               taskRowActions={taskRowActions}
+              sessionUserId={sessionUserId}
+              sessionRole={sessionRole}
             />
           )}
         </CardContent>

@@ -13,6 +13,8 @@ import {
 
 export type TaskRowActionsProps = {
   rowLabel: string
+  canEdit?: boolean
+  canDelete?: boolean
   onView: () => void
   onEdit: () => void
   onDelete: () => void
@@ -20,6 +22,8 @@ export type TaskRowActionsProps = {
 
 export function TaskRowActions({
   rowLabel,
+  canEdit = false,
+  canDelete = false,
   onView,
   onEdit,
   onDelete,
@@ -47,26 +51,32 @@ export function TaskRowActions({
           <EyeIcon className="size-4" />
           View
         </DropdownMenuItem>
-        <DropdownMenuItem
-          className="cursor-pointer gap-2"
-          onSelect={() => {
-            onEdit()
-          }}
-        >
-          <PencilIcon className="size-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          variant="destructive"
-          className="cursor-pointer gap-2"
-          onSelect={() => {
-            onDelete()
-          }}
-        >
-          <Trash2Icon className="size-4" />
-          Delete
-        </DropdownMenuItem>
+        {canEdit ? (
+          <DropdownMenuItem
+            className="cursor-pointer gap-2"
+            onSelect={() => {
+              onEdit()
+            }}
+          >
+            <PencilIcon className="size-4" />
+            Edit
+          </DropdownMenuItem>
+        ) : null}
+        {canDelete ? (
+          <>
+            {canEdit ? <DropdownMenuSeparator /> : null}
+            <DropdownMenuItem
+              variant="destructive"
+              className="cursor-pointer gap-2"
+              onSelect={() => {
+                onDelete()
+              }}
+            >
+              <Trash2Icon className="size-4" />
+              Delete
+            </DropdownMenuItem>
+          </>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   )

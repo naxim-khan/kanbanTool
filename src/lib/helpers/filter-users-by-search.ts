@@ -1,17 +1,20 @@
-import type { AdminUserRow } from "@/schemas/user-api.schema"
+export type UserSearchRow = {
+  id: string
+  name: string
+  email: string
+}
 
 function normalize(s: string): string {
   return s.trim().toLowerCase()
 }
 
 /**
- * Client-side filter for assignee search. Backend currently returns the full
- * admin user list; this keeps the combobox responsive without refetching per keystroke.
+ * Client-side filter for assignee/creator comboboxes (no refetch per keystroke).
  */
 export function filterUsersBySearch(
-  users: AdminUserRow[],
+  users: UserSearchRow[],
   search: string
-): AdminUserRow[] {
+): UserSearchRow[] {
   const q = normalize(search)
   if (!q) return users
   return users.filter(

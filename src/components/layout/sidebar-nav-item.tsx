@@ -40,6 +40,7 @@ export function SidebarNavItem({ item, active, collapsed }: SidebarNavItemProps)
       >
         <Link
           href={item.href}
+          prefetch={false}
           className={cn(
             "flex w-full min-w-0 items-center justify-start gap-2 transition-[gap] duration-300 ease-out",
             collapsed && "gap-0"

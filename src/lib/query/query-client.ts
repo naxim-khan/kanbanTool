@@ -4,9 +4,13 @@ function createQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 60_000,
+        /** Server data is updated via mutations + cache writes; avoid refetch on every route visit. */
+        staleTime: 5 * 60_000,
+        gcTime: 15 * 60_000,
         retry: 1,
+        refetchOnMount: false,
         refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
       },
     },
   })

@@ -27,21 +27,27 @@ import {
   type TasksByStatus,
 } from "@/lib/helpers/group-tasks-by-status"
 import type { TaskPriority, TaskStatus, TaskWithRelations } from "@/schemas/task-api.schema"
+import { getTaskPermissions } from "@/lib/helpers/task-permissions"
 import type {
   KanbanBoardColumn,
   KanbanTaskCardModel,
   TaskPriorityBadgeVariant,
 } from "@/lib/kanban-presentational"
+import type { UserRole } from "@/types/auth.types"
 
 export type TasksKanbanClientProps = {
   grouped: TasksByStatus
   isLoading: boolean
+  sessionUserId: string | undefined
+  sessionRole: UserRole | undefined
   onView: (task: TaskWithRelations) => void
   onEdit: (task: TaskWithRelations) => void
   onDelete: (task: TaskWithRelations) => void
   onMoveStatus: (args: { id: string; status: TaskStatus }) => void
   /** When this increments, any optimistic column override is cleared (mutation failed). */
   moveFailureCount: number
+  /** Task ids with in-flight or queued status PATCH — keep column override until settled. */
+  pendingMoveTaskIds: readonly string[]
 }
 
 function priorityBadgeVariantFor(p: TaskPriority): TaskPriorityBadgeVariant {
@@ -67,11 +73,14 @@ function toKanbanTaskCardModel(task: TaskWithRelations): KanbanTaskCardModel {
 export function TasksKanbanClient({
   grouped,
   isLoading,
+  sessionUserId,
+  sessionRole,
   onView,
   onEdit,
   onDelete,
   onMoveStatus,
   moveFailureCount,
+  pendingMoveTaskIds,
 }: TasksKanbanClientProps) {
   const [activePreview, setActivePreview] = useState<KanbanTaskCardModel | null>(
     null
@@ -92,14 +101,29 @@ export function TasksKanbanClient({
         statusId: status,
         label: TASK_STATUS_LABELS[status],
         dotClassName: TASK_STATUS_DOT_CLASS[status],
-        items: displayedGrouped[status].map((task) => ({
-          model: toKanbanTaskCardModel(task),
-          viewTask: () => onView(task),
-          editTask: () => onEdit(task),
-          deleteTask: () => onDelete(task),
-        })),
+        items: displayedGrouped[status].map((task) => {
+          const permissions = getTaskPermissions(
+            task,
+            sessionUserId,
+            sessionRole
+          )
+          return {
+            model: toKanbanTaskCardModel(task),
+            permissions,
+            viewTask: () => onView(task),
+            editTask: () => onEdit(task),
+            deleteTask: () => onDelete(task),
+          }
+        }),
       })),
-    [displayedGrouped, onView, onEdit, onDelete]
+    [
+      displayedGrouped,
+      sessionUserId,
+      sessionRole,
+      onView,
+      onEdit,
+      onDelete,
+    ]
   )
 
   const prevFailureRef = useRef(moveFailureCount)
@@ -112,12 +136,13 @@ export function TasksKanbanClient({
 
   useLayoutEffect(() => {
     if (!columnOverride) return
+    if (pendingMoveTaskIds.includes(columnOverride.taskId)) return
     const flat = [...grouped.TODO, ...grouped.IN_PROGRESS, ...grouped.DONE]
     const t = flat.find((x) => x.id === columnOverride.taskId)
     if (t?.status === columnOverride.status) {
       startTransition(() => setColumnOverride(null))
     }
-  }, [grouped, columnOverride])
+  }, [grouped, columnOverride, pendingMoveTaskIds])
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -158,6 +183,8 @@ export function TasksKanbanClient({
       const overId = String(over.id)
       if (!TASK_STATUS_VALUES.includes(overId as TaskStatus)) return
       const nextStatus = overId as TaskStatus
+      const permissions = getTaskPermissions(task, sessionUserId, sessionRole)
+      if (!permissions.canChangeStatus) return
       if (task.status === nextStatus) return
       flushSync(() => {
         setColumnOverride({ taskId: task.id, status: nextStatus })

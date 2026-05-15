@@ -4,6 +4,8 @@ export type TaskPriorityBadgeVariant =
   | "secondary"
   | "outline"
 
+import type { TaskPermissions } from "@/lib/helpers/task-permissions"
+
 /** Minimal task shape for Kanban UI — built in views from API rows. */
 export type KanbanTaskCardModel = {
   id: string
@@ -16,6 +18,7 @@ export type KanbanTaskCardModel = {
 
 export type KanbanTaskCardItem = {
   model: KanbanTaskCardModel
+  permissions: TaskPermissions
   viewTask: () => void
   editTask: () => void
   deleteTask: () => void

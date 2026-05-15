@@ -1,14 +1,16 @@
 "use client"
 
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
 import {
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table"
+import { UserPlus } from "lucide-react"
 
-import { EmptyState } from "@/components/EmptyState"
+import { Button } from "@/components/Button"
 import { ErrorState } from "@/components/ErrorState"
 import { DataTable } from "@/components/shared/data-table"
 import { DataTableToolbar } from "@/components/shared/data-table-toolbar"
@@ -21,11 +23,21 @@ import { UserTableDialogs } from "./user-table-dialogs"
 import { createUsersTableColumns } from "./users-table-columns"
 
 export function UsersClient() {
+  const router = useRouter()
+  const hydrated = useAppSelector((s) => s.auth.hydrated)
   const role = useAppSelector((s) => s.auth.user?.role)
   const sessionUserId = useAppSelector((s) => s.auth.user?.id)
   const isAdmin = role === "ADMIN"
+
+  useEffect(() => {
+    if (hydrated && role && !isAdmin) {
+      router.replace("/dashboard")
+    }
+  }, [hydrated, role, isAdmin, router])
+
   const { data, isPending, isError, error, refetch } = useUsers(isAdmin)
   const [globalFilter, setGlobalFilter] = useState("")
+  const [createOpen, setCreateOpen] = useState(false)
   const [viewUser, setViewUser] = useState<AdminUserRow | null>(null)
   const [editUser, setEditUser] = useState<AdminUserRow | null>(null)
   const [deleteUser, setDeleteUser] = useState<AdminUserRow | null>(null)
@@ -67,15 +79,8 @@ export function UsersClient() {
     },
   })
 
-  if (!isAdmin) {
-    return (
-      <div className="p-4 md:p-6">
-        <EmptyState
-          title="Admin only"
-          description="Listing all users requires an administrator account. The backend route is GET /api/users with Role.ADMIN."
-        />
-      </div>
-    )
+  if (!hydrated || !isAdmin) {
+    return null
   }
 
   return (
@@ -97,6 +102,13 @@ export function UsersClient() {
           onChange={(e) => setGlobalFilter(e.target.value)}
           aria-label="Filter users"
         />
+        <Button
+          type="button"
+          leftIcon={<UserPlus className="size-4" aria-hidden />}
+          onClick={() => setCreateOpen(true)}
+        >
+          Add user
+        </Button>
       </DataTableToolbar>
 
       {isError ? (
@@ -117,6 +129,8 @@ export function UsersClient() {
       <UserTableDialogs
         viewUser={viewUser}
         onViewDismiss={() => setViewUser(null)}
+        createOpen={createOpen}
+        onCreateDismiss={() => setCreateOpen(false)}
         editUser={editUser}
         onEditDismiss={() => setEditUser(null)}
         deleteUser={deleteUser}

@@ -1,65 +1,56 @@
 "use client"
 
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useCallback, useMemo, useReducer, useState } from "react"
+import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 
-import { queryKeys } from "@/constants/query-keys"
-import type {
-  PaginatedTasksResponse,
-  TaskStatus,
-} from "@/schemas/task-api.schema"
-import type { TasksQuery } from "@/schemas/tasks-query.schema"
-import { updateTaskStatus } from "@/services/tasks/updateTaskStatus"
+import {
+  enqueueTaskStatusMove,
+  getPendingTaskStatusMoveIds,
+  isTaskStatusMovePending,
+  type TaskStatusMoveQueueCallbacks,
+} from "@/lib/helpers/task-status-move-queue"
+import type { TaskStatus } from "@/schemas/task-api.schema"
 
-type Ctx = { previous: PaginatedTasksResponse | undefined }
-
-export function useTaskStatusDndMutation(listQuery: TasksQuery) {
+/** Kanban drag-and-drop status changes — serialized per task, optimistic list cache. */
+export function useTaskStatusDndMutation() {
   const queryClient = useQueryClient()
-  const queryKey = queryKeys.tasks.list(listQuery)
+  const [tick, bump] = useReducer((n: number) => n + 1, 0)
+  const [failureCount, setFailureCount] = useState(0)
 
-  return useMutation({
-    mutationFn: async ({
-      id,
-      status,
-    }: {
-      id: string
-      status: TaskStatus
-    }) => updateTaskStatus(id, { status }),
-    onMutate: async ({ id, status }) => {
-      const previous = queryClient.getQueryData<PaginatedTasksResponse>(queryKey)
-      queryClient.setQueryData<PaginatedTasksResponse>(queryKey, (old) => {
-        if (!old) return old
-        return {
-          ...old,
-          items: old.items.map((t) => (t.id === id ? { ...t, status } : t)),
-        }
-      })
-      // Do not await before setQueryData — dnd-kit clears transform on drop first;
-      // a delayed optimistic update causes a visible snap back to the old column.
-      void queryClient.cancelQueries({ queryKey })
-      return { previous } satisfies Ctx
+  const callbacks = useMemo<TaskStatusMoveQueueCallbacks>(
+    () => ({
+      onPendingChange: () => bump(),
+      onFailure: () => {
+        setFailureCount((c) => c + 1)
+        toast.error("Could not move task")
+        bump()
+      },
+    }),
+    []
+  )
+
+  const mutate = useCallback(
+    ({ id, status }: { id: string; status: TaskStatus }) => {
+      void enqueueTaskStatusMove(queryClient, id, status, callbacks)
     },
-    onError: (err: Error, _vars, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(queryKey, context.previous)
-      }
-      toast.error(err.message ?? "Could not move task")
-    },
-    onSuccess: (serverTask) => {
-      queryClient.setQueryData<PaginatedTasksResponse>(queryKey, (old) => {
-        if (!old) return old
-        return {
-          ...old,
-          items: old.items.map((t) =>
-            t.id === serverTask.id ? serverTask : t
-          ),
-        }
-      })
-    },
-    onSettled: (_data, _error, variables) => {
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.tasks.task(variables.id),
-      })
-    },
-  })
+    [queryClient, callbacks]
+  )
+
+  const pendingTaskIds = useMemo(
+    () => getPendingTaskStatusMoveIds(),
+    [tick]
+  )
+
+  const isTaskPending = useCallback(
+    (taskId: string) => isTaskStatusMovePending(taskId),
+    [tick]
+  )
+
+  return {
+    mutate,
+    failureCount,
+    pendingTaskIds,
+    isTaskPending,
+  }
 }

@@ -9,7 +9,19 @@ import {
   TASK_PRIORITY_LABELS,
   TASK_STATUS_LABELS,
 } from "@/constants/tasks"
+import { getTaskPermissions } from "@/lib/helpers/task-permissions"
 import type { TaskWithRelations } from "@/schemas/task-api.schema"
+import type { UserRole } from "@/types/auth.types"
+
+export type TasksTableMeta = {
+  taskRowActions: {
+    onView: (task: TaskWithRelations) => void
+    onEdit: (task: TaskWithRelations) => void
+    onDelete: (task: TaskWithRelations) => void
+  }
+  sessionUserId: string | undefined
+  sessionRole: UserRole | undefined
+}
 
 function formatDate(value: string | null | undefined): string {
   if (!value) return "—"
@@ -78,15 +90,22 @@ export function createTasksTableColumns(): ColumnDef<TaskWithRelations>[] {
       id: "actions",
       header: () => <span className="sr-only">Actions</span>,
       cell: ({ row, table }) => {
-        const meta = table.options.meta?.taskRowActions
-        if (!meta) return null
+        const meta = table.options.meta as TasksTableMeta | undefined
+        if (!meta?.taskRowActions) return null
+        const permissions = getTaskPermissions(
+          row.original,
+          meta.sessionUserId,
+          meta.sessionRole
+        )
         return (
           <div className="flex justify-end">
             <TaskRowActions
               rowLabel={row.original.title}
-              onView={() => meta.onView(row.original)}
-              onEdit={() => meta.onEdit(row.original)}
-              onDelete={() => meta.onDelete(row.original)}
+              canEdit={permissions.canEdit}
+              canDelete={permissions.canDelete}
+              onView={() => meta.taskRowActions.onView(row.original)}
+              onEdit={() => meta.taskRowActions.onEdit(row.original)}
+              onDelete={() => meta.taskRowActions.onDelete(row.original)}
             />
           </div>
         )

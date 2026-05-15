@@ -13,6 +13,7 @@ export const queryKeys = {
   users: {
     root: ["users"] as const,
     list: () => ["users", "list"] as const,
+    assignableList: () => ["users", "assignable"] as const,
     detail: (id: string) => ["users", "detail", id] as const,
   },
 }

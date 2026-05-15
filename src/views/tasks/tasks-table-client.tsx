@@ -10,8 +10,12 @@ import {
 
 import { DataTable } from "@/components/shared/data-table"
 import type { TaskWithRelations } from "@/schemas/task-api.schema"
+import type { UserRole } from "@/types/auth.types"
 
-import { createTasksTableColumns } from "./tasks-table-columns"
+import {
+  createTasksTableColumns,
+  type TasksTableMeta,
+} from "./tasks-table-columns"
 
 export type TasksTableClientProps = {
   /** Current server page rows (already sliced). */
@@ -25,6 +29,8 @@ export type TasksTableClientProps = {
     onEdit: (task: TaskWithRelations) => void
     onDelete: (task: TaskWithRelations) => void
   }
+  sessionUserId: string | undefined
+  sessionRole: UserRole | undefined
 }
 
 export function TasksTableClient({
@@ -34,12 +40,18 @@ export function TasksTableClient({
   pagination,
   onPaginationChange,
   taskRowActions,
+  sessionUserId,
+  sessionRole,
 }: TasksTableClientProps) {
   const columns = useMemo(() => createTasksTableColumns(), [])
 
   const tableMeta = useMemo(
-    () => ({ taskRowActions }),
-    [taskRowActions]
+    (): TasksTableMeta => ({
+      taskRowActions,
+      sessionUserId,
+      sessionRole,
+    }),
+    [taskRowActions, sessionUserId, sessionRole]
   )
 
   const pageCount = Math.max(1, Math.ceil(totalRows / pagination.pageSize))
